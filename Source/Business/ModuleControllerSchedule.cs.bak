@@ -1,0 +1,115 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Collections.ObjectModel;
+using System.Linq;
+using System.Text;
+
+namespace PageNavigator.Business
+{
+	public class ModuleControllerSchedule : Common.ViewModelBase
+	{
+		private static ModuleControllerSchedule instance = new ModuleControllerSchedule();
+		public static ModuleControllerSchedule Instance
+		{
+			get { return ModuleControllerSchedule.instance; }
+		}
+
+		protected ModuleControllerSchedule() { }
+
+		/// <summary>
+		/// opened controllers module name and origin title map, same module will be add only once.
+		/// change current module title such as Module(1), Module(2).
+		/// when module closed, keep its module name for cache.
+		/// </summary>
+		private Dictionary<string, string> moduleNameTitleMap = new Dictionary<string, string>();
+
+		private ObservableCollection<ModuleControllerBase> openedControllerList = new ObservableCollection<ModuleControllerBase>();
+		public ObservableCollection<ModuleControllerBase> OpenedModuleControllerList
+		{
+			get { return this.openedControllerList; }
+		}
+
+		public int PinnedCount
+		{
+			get
+			{
+				return this.openedControllerList.Count(item => item.IsPinned);
+			}
+		}
+
+		/// <summary>
+		/// Home page count must be 0 or 1.
+		/// </summary>
+		private int homePageCount = 0;
+
+		/// <summary>
+		/// get controller by module
+		/// </summary>
+		public Func<Model.ModuleData, ModuleControllerBase> ModuleControllerMapping;
+
+		/// <summary>
+		/// Binding Controller to Module, then open its first page, and handle close event
+		/// </summary>
+		public ModuleControllerBase CreateModule(Model.ModuleData module)
+		{
+			//use new module not reference
+			Model.ModuleData moduleCopy = Model.ModuleData.Copy(module);
+			//get controller instance
+			ModuleControllerBase controller = this.ModuleControllerMapping(moduleCopy);
+			if (controller == null)
+			{
+				throw new InvalidOperationException("module controller can not be null.");
+			}
+			if (controller.IsHomePage)
+			{
+				this.homePageCount++;
+				if (this.homePageCount > 1)
+				{
+					throw new InvalidOperationException("only can set one Home page.");
+				}
+			}
+			this.createModule(controller);
+			return controller;
+		}
+
+		private void createModule(ModuleControllerBase controller)
+		{
+			if (!this.moduleNameTitleMap.ContainsKey(controller.Module.Name))
+			{
+				this.moduleNameTitleMap.Add(controller.Module.Name, controller.Module.Title);
+			}
+			controller.Closed += this.onModuleClosed;
+			this.openedControllerList.Insert(this.PinnedCount, controller);
+			this.updateOpenedModuleTitle(controller.Module.Name);
+			controller.Create();
+		}
+
+		private void onModuleClosed(object sender, EventArgs e)
+		{
+			var controller = (ModuleControllerBase)sender;
+			controller.Closed -= this.onModuleClosed;
+			this.openedControllerList.Remove(controller);
+			this.updateOpenedModuleTitle(controller.Module.Name);
+		}
+
+		private void updateOpenedModuleTitle(string moduleName)
+		{
+			var controllers = this.openedControllerList
+					   .Where(item => item.Module.Name == moduleName)
+					   .OrderBy(item => item.CreatedDateTime)
+					   .ToList();
+			if (controllers.Count > 0)
+			{
+				string originTitle = this.moduleNameTitleMap[moduleName];
+				controllers[0].Module.Title = originTitle;
+				if (controllers.Count > 1)
+				{
+					for (int index = 1; index < controllers.Count; index++)
+					{
+						controllers[index].Module.Title = string.Format("{0}({1})", originTitle, index);
+					}
+				}
+			}
+		}
+	}
+}

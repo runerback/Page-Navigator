@@ -1,0 +1,144 @@
+﻿using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using System.Text;
+using System.Xml.Serialization;
+
+namespace PageNavigator.Business
+{
+	public class ModulesManager
+	{
+		private Dictionary<string, Model.ModuleData> modules = new Dictionary<string, Model.ModuleData>();
+		private List<Model.ModuleData> moduleSets = new List<Model.ModuleData>();
+
+		public Model.ModuleData this[string name]
+		{
+			get
+			{
+				if (!this.modules.ContainsKey(name))
+				{
+					throw new ArgumentOutOfRangeException(
+						string.Format("module with name \"{0}\" no found.", name));
+				}
+				return this.modules[name];
+			}
+		}
+
+		public List<Model.ModuleData> ModuleSets
+		{
+			get { return this.moduleSets; }
+		}
+
+		public void Add(Model.ModuleData moduleSet)
+		{
+			if (moduleSet == null)
+			{
+				throw new ArgumentNullException("moduleSet");
+			}
+			if (!moduleSet.IsModuleSet)
+			{
+				throw new NotSupportedException(
+					string.Format("only support container module \"{0}\"", moduleSet.Name));
+			}
+
+			List<string> insertedKeys = new List<string>();
+			try
+			{
+				foreach (var module in moduleSet.SubModules)
+				{
+					if (!this.modules.ContainsKey(module.Name))
+					{
+						this.modules.Add(module.Name, module);
+						insertedKeys.Add(module.Name);
+					}
+					else
+					{
+						throw new Exception(
+							string.Format("There is already a module with same name \"{0}\" exists. Make sure to add unique modules. All added modules under current module set will be removed.", module.Name));
+					}
+				}
+				this.moduleSets.Add(moduleSet);
+			}
+			catch
+			{
+				//rollback
+				foreach (var key in insertedKeys)
+				{
+					this.modules.Remove(key);
+				}
+				throw;
+			}
+			finally
+			{
+				insertedKeys.Clear();
+			}
+		}
+
+		public void AddRange(IEnumerable<Model.ModuleData> moduleSets)
+		{
+			if (moduleSets != null)
+			{
+				foreach (var moduleSet in moduleSets)
+				{
+					this.Add(moduleSet);
+				}
+			}
+		}
+
+		public void Load(string filename = null)
+		{
+			if (string.IsNullOrEmpty(filename))
+			{
+				filename = @"AppData/modulesets.xml";
+			}
+			FileInfo info = new FileInfo(filename);
+			if (!info.Exists)
+			{
+				throw new FileNotFoundException(info.FullName);
+			}
+
+			Model.ModuleData moduleSets;
+			object result;
+			XmlSerializer serializer = new XmlSerializer(typeof(Model.ModuleData));
+			using (var stream = info.OpenRead())
+			{
+				result = serializer.Deserialize(stream);
+			}
+			if (result == null)
+			{
+				throw new Exception("cannot read module sets data from file: " + info.FullName);
+			}
+			moduleSets = (Model.ModuleData)result;
+			this.AddRange(moduleSets.SubModules);
+			moduleSets = null;
+		}
+
+		public void Save(string filename = null)
+		{
+			if (string.IsNullOrEmpty(filename))
+			{
+				filename = @"AppData/modulesets.xml";
+			}
+			FileInfo info = new FileInfo(filename);
+			if (!info.Directory.Exists)
+			{
+				info.Directory.Create();
+			}
+
+			Model.ModuleData moduleSets = new Model.ModuleData(null, this.moduleSets.ToList());
+			XmlSerializer serializer = new XmlSerializer(typeof(Model.ModuleData));
+			using (var stream = new FileStream(info.FullName, FileMode.Create, FileAccess.ReadWrite))
+			{
+				serializer.Serialize(stream, moduleSets);
+			}
+			moduleSets = null;
+		}
+
+		private static ModulesManager instance = new ModulesManager();
+		public static ModulesManager Instance
+		{
+			get { return ModulesManager.instance; }
+		}
+	}
+}

@@ -1,0 +1,149 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Collections.ObjectModel;
+using System.Linq;
+using System.Text;
+
+namespace PageNavigator.ViewModel
+{
+	public class TabContainerViewModel : Common.ViewModelBase
+	{
+		protected TabContainerViewModel()
+		{
+			MenuContainerViewModel.Instance.ModuleOpened += this.onModuleOpened;
+
+			this.navigateToModule = new Common.RelayCommand(this.onNavigateToModule);
+			this.pinModule = new Common.RelayCommand(this.onPinModule);
+			this.closeModule = new Common.RelayCommand(this.onCloseModule);
+		}
+
+		private static TabContainerViewModel instance = new TabContainerViewModel();
+		public static TabContainerViewModel Instance
+		{
+			get { return instance; }
+		}
+
+		public ObservableCollection<Business.ModuleControllerBase> ModuleControllers
+		{
+			get { return Business.ModuleControllerSchedule.Instance.OpenedModuleControllerList; }
+		}
+
+		private void onModuleOpened(object sender, EventArgs e)
+		{
+			if (sender != null)
+			{
+				var module = sender as Model.ModuleData;
+				this.CurrentController = Business.ModuleControllerSchedule.Instance.CreateModule(module);
+				this.OnPropertyChanged("ModuleControllers");
+			}
+		}
+
+		private Business.ModuleControllerBase currentController;
+		public Business.ModuleControllerBase CurrentController
+		{
+			get { return this.currentController; }
+			private set
+			{
+				this.currentController = value;
+				this.updateControllerActivateState();
+				this.OnPropertyChanged("CurrentController");
+			}
+		}
+
+		private void updateControllerActivateState()
+		{
+			if (this.currentController != null)
+			{
+				foreach (var controller in this.ModuleControllers)
+				{
+					if (controller == this.currentController)
+					{
+						controller.IsActivated = true;
+					}
+					else
+					{
+						controller.IsActivated = false;
+					}
+				}
+			}
+		}
+
+		#region navigate to
+		private Common.RelayCommand navigateToModule;
+		public Common.RelayCommand NavigateToModule
+		{
+			get { return this.navigateToModule; }
+		}
+
+		private void onNavigateToModule(object obj)
+		{
+			if (obj != null)
+			{
+				var controller = obj as Business.ModuleControllerBase;
+				this.CurrentController = controller;
+			}
+		}
+		#endregion navigate to
+
+		#region pin module
+		private Common.RelayCommand pinModule;
+		public Common.RelayCommand PinModule
+		{
+			get { return this.pinModule; }
+		}
+
+		private void onPinModule(object obj)
+		{
+			if (obj != null)
+			{
+				var controller = obj as Business.ModuleControllerBase;
+				this.updatePinnedState(controller);
+			}
+		}
+
+		private void updatePinnedState(Business.ModuleControllerBase controller)
+		{
+			int pinnedCount = Business.ModuleControllerSchedule.Instance.PinnedCount;
+			int currentIndex = this.ModuleControllers.IndexOf(controller);
+			if (controller.IsPinned)	//unpin
+			{
+				this.ModuleControllers.Move(currentIndex, pinnedCount - 1);
+				controller.IsPinned = false;
+			}
+			else	//pin
+			{
+				this.ModuleControllers.Move(currentIndex, pinnedCount);
+				controller.IsPinned = true;
+			}
+			this.OnPropertyChanged("ModuleControllers");
+		}
+		#endregion pin module
+
+		#region close module
+		private Common.RelayCommand closeModule;
+		public Common.RelayCommand CloseModule
+		{
+			get { return this.closeModule; }
+		}
+
+		private void onCloseModule(object obj)
+		{
+			if (obj != null)
+			{
+				var controller = obj as Business.ModuleControllerBase;
+				controller.Close();
+				this.OnPropertyChanged("ModuleControllers");
+				if (this.ModuleControllers.Count > 0)	//open last module tab page
+				{
+					this.CurrentController = this.ModuleControllers.Last();
+				}
+				else //all module closed
+				{
+					this.CurrentController = null;
+				}
+			}
+		}
+		#endregion close module
+
+	}
+}
