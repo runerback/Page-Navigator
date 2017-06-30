@@ -4,27 +4,39 @@
         xmlns:controls="clr-namespace:PageNavigatorSample.Controls"
         Title="MainWindow" Height="350" Width="525">
     <Grid>
-        <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="Auto" />
-            <ColumnDefinition />
-        </Grid.ColumnDefinitions>
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
             <RowDefinition />
         </Grid.RowDefinitions>
-        
-        <controls:NavigatorView Grid.Row="0" Grid.Column="0" />
-        <controls:TabView Grid.Row="0" Grid.Column="1" />
 
-        <Expander Grid.Row="1" Grid.Column="0" ExpandDirection="Down" IsExpanded="True" 
-                  Background="WhiteSmoke" BorderBrush="LightGray" BorderThickness="0 0 1 1" Margin="1">
-            <Expander.Header>
-                <TextBlock Text="Menu" FontWeight="Bold" />
-            </Expander.Header>
+        <Grid Grid.Row="0">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition />
+            </Grid.ColumnDefinitions>
             
-            <controls:MenuView Margin="6" />
-        </Expander>
-        
-        <controls:PageContainerView Grid.Row="1" Grid.Column="1" />
+            <controls:NavigatorView Grid.Row="0" Grid.Column="0" />
+            <controls:TabView Grid.Row="0" Grid.Column="1" />
+        </Grid>
+
+        <Grid Grid.Row="1">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition />
+            </Grid.ColumnDefinitions>
+            
+            <Expander Grid.Row="1" Grid.Column="0" ExpandDirection="Right" IsExpanded="True" 
+                  Background="WhiteSmoke" BorderBrush="LightGray" BorderThickness="0 0 1 1" Margin="1">
+                <Expander.Header>
+                    <TextBlock Text="Menu" FontWeight="Black" Margin="-6 0">
+                        <TextBlock.RenderTransform>
+                            <RotateTransform Angle="-90" CenterX="19" CenterY="12" />
+                        </TextBlock.RenderTransform>
+                    </TextBlock>
+                </Expander.Header>
+                <controls:MenuView />
+            </Expander>
+            <controls:PageContainerView Grid.Row="1" Grid.Column="1" />
+        </Grid>
     </Grid>
 </Window>

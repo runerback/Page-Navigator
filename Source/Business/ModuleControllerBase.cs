@@ -72,15 +72,22 @@ namespace PageNavigator.Business
 		protected bool isHomePage;
 		/// <summary>
 		/// indicate whether current controller is Home page.
-		/// this property can only set from derived controller class.
 		/// Home page count must be 0 or 1.
-		/// Home page will set IsPin to True and cannot changed.
+		/// Home page will set IsPin to True and cannot be changed.
 		/// Home page has no Close and Pin tool.
 		/// </summary>
-		[System.ComponentModel.EditorBrowsable(System.ComponentModel.EditorBrowsableState.Never)]
 		public bool IsHomePage
 		{
 			get { return this.isHomePage; }
+		}
+
+		protected bool isSingleMode;
+		/// <summary>
+		/// indicate whether this page can be multiple opened. if true, current page can only be opened once at the same time, otherwise, multiple.
+		/// </summary>
+		public bool IsSingleMode
+		{
+			get { return this.isSingleMode; }
 		}
 
 		private FrameworkElement currentPage;

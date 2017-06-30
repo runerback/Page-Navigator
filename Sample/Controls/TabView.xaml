@@ -9,12 +9,13 @@
         
         <DataTemplate x:Key="moduleControllerTemplate">
             <ToggleButton Command="{Binding DataContext.NavigateToModule, RelativeSource={RelativeSource Mode=FindAncestor, AncestorType=UserControl, AncestorLevel=1}}"
-                              CommandParameter="{Binding .}"
-                              IsChecked="{Binding IsActivated, Mode=TwoWay}"
-                              Focusable="{Binding IsActivated, Mode=OneWay, Converter={StaticResource OppositeBooleanConverter}}"
-                              IsThreeState="False">
+                          CommandParameter="{Binding .}"
+                          IsChecked="{Binding IsActivated, Mode=TwoWay}"
+                          Focusable="{Binding IsActivated, Mode=OneWay, Converter={StaticResource OppositeBooleanConverter}}"
+                          IsThreeState="False"
+                          ToolTip="{Binding Module.Title, Mode=OneWay}">
                 <StackPanel Orientation="Horizontal">
-                    <TextBlock Text="{Binding Module.Title, Mode=OneWay}" HorizontalAlignment="Stretch" VerticalAlignment="Center" />
+                    <TextBlock Text="{Binding Module.Title, Mode=OneWay}" HorizontalAlignment="Stretch" VerticalAlignment="Center" Margin="3 0" />
                     <ToggleButton Content="P"
                                   Command="{Binding DataContext.PinModule, RelativeSource={RelativeSource Mode=FindAncestor, AncestorType=UserControl, AncestorLevel=1}}" 
                                   CommandParameter="{Binding .}"
