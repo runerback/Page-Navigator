@@ -9,7 +9,9 @@ namespace PageNavigatorSample.Modules.A
 	{
 		internal ModuleAPart1Controller(PageNavigator.Model.ModuleData moduleData)
 			: base(moduleData)
-		{ }
+		{
+			this.isSingleMode = true;
+		}
 
 		protected override System.Windows.FrameworkElement setStartPage()
 		{

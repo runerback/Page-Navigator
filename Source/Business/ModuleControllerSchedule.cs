@@ -74,6 +74,17 @@ namespace PageNavigator.Business
 					throw new InvalidOperationException("only can set one Home page.");
 				}
 			}
+			if (controller.IsSingleMode)
+			{
+				var singleControllerInstance = openedControllerList
+					.FirstOrDefault(item => item.Module.Equals(module));
+				if (singleControllerInstance != null)
+				{
+					NavigateTo(singleControllerInstance);
+					return;
+				}
+			}
+
 			createModule(controller);
 			currentModuleController = controller;
 			updateControllerActivateState();
