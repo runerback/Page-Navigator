@@ -4,7 +4,7 @@ namespace PageNavigator.Business
 {
 	public static class ViewModels
 	{
-		public static object MenuContainerViewModel
+		public static IOpenModule MenuContainerViewModel
 		{
 			get
 			{

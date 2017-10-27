@@ -6,7 +6,7 @@ using System.Text;
 
 namespace PageNavigator.ViewModel
 {
-	internal class MenuContainerViewModel : Common.ViewModelBase
+	internal class MenuContainerViewModel : Common.ViewModelBase, IOpenModule
 	{
 		private static MenuContainerViewModel instance = new MenuContainerViewModel();
 		public static MenuContainerViewModel Instance
@@ -35,11 +35,16 @@ namespace PageNavigator.ViewModel
 
 		private void onOpenModule(object obj)
 		{
-			Model.ModuleData module = obj as Model.ModuleData;
+			Open(obj as Model.ModuleData);
+		}
+
+		public void Open(Model.ModuleData module)
+		{
+			if (module == null)
+				throw new ArgumentNullException("module");
+
 			if (this.ModuleOpened != null)
-			{
 				this.ModuleOpened(module, EventArgs.Empty);
-			}
 		}
 	}
 }
