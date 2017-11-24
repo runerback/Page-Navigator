@@ -45,6 +45,7 @@
   <ItemGroup>
     <Compile Include="Business\ModuleControllerBase.cs" />
     <Compile Include="Business\ModuleControllerSchedule.cs" />
+    <Compile Include="Business\ModuleSerializer.cs" />
     <Compile Include="Business\ModulesManager.cs" />
     <Compile Include="Business\ViewModels.cs" />
     <Compile Include="Common\RelayCommand.cs" />

@@ -7,21 +7,17 @@ using System.Xml.Serialization;
 
 namespace PageNavigator.Model
 {
-	[Serializable]
-	[XmlRoot("ModuleSets")]
-	public class ModuleData : Common.ViewModelBase, IEquatable<ModuleData>
+	public class ModuleData : Common.ViewModelBase, IXmlSerializable, IEquatable<ModuleData>, IEqualityComparer<ModuleData>
 	{
 		/// <summary>
-		/// Name in code
+		/// Name in code. should be unique
 		/// </summary>
-		[XmlAttribute("name")]
-		public string Name { get; set; }
+		public string Name { get; private set; }
 
 		private string title;
 		/// <summary>
-		/// Title in UI
+		/// Title in UI Menu
 		/// </summary>
-		[XmlAttribute("title")]
 		public string Title
 		{
 			get { return this.title; }
@@ -35,86 +31,98 @@ namespace PageNavigator.Model
 			}
 		}
 
-		private ObservableCollection<ModuleData> subModules;
-		[XmlElement("Module")]
+		private ObservableCollection<ModuleData> subModules = 
+			new ObservableCollection<ModuleData>();
 		public ObservableCollection<ModuleData> SubModules
 		{
 			get { return this.subModules; }
 		}
 
-		[XmlIgnore]
 		public ModuleData ModuleSet { get; private set; }
 
 		/// <summary>
 		/// whether is set of modules under this module
 		/// </summary>
-		[XmlIgnore]
 		public bool IsModuleSet
 		{
 			get { return this.SubModules.Count > 0; }
 		}
 
-		private void subModules_CollectionChanged(object sender, System.Collections.Specialized.NotifyCollectionChangedEventArgs e)
+		public void Add(ModuleData subModule)
 		{
-			if (e.NewItems != null && e.NewItems.Count > 0)
+			if (subModule == null)
+				throw new ArgumentNullException("subModule");
+			var set = subModule.ModuleSet;
+			while (set != null)
 			{
-				if (e.Action == System.Collections.Specialized.NotifyCollectionChangedAction.Add)
-				{
-					foreach (ModuleData moduleData in e.NewItems)
-					{
-						moduleData.ModuleSet = this;
-					}
-				}
+				if (set == this)
+					throw new ArgumentException("subModule. loop add");
+				set = set.ModuleSet;
 			}
+
+			this.subModules.Add(subModule);
+			subModule.ModuleSet = this;
 		}
 
-		public ModuleData()
+		protected ModuleData() { }
+
+		public ModuleData(string name)
 		{
-			this.subModules = new ObservableCollection<ModuleData>();
-			this.subModules.CollectionChanged += subModules_CollectionChanged;
+			if (string.IsNullOrWhiteSpace(name))
+				throw new ArgumentNullException("name");
+			this.Name = name;
 		}
 
 		public ModuleData(string name, string title)
-			: this()
+			: this(name)
 		{
-			this.Name = name;
+			if (string.IsNullOrEmpty(title))
+				throw new ArgumentNullException("title");
 			this.Title = title;
 		}
-
-		public ModuleData(string name)
-			: this(name, name) { }
-
-		public ModuleData(string name, string title, IEnumerable<ModuleData> subModules)
-			: this(name, title)
-		{
-			if (subModules != null)
-			{
-				foreach (var module in subModules)
-				{
-					this.subModules.Add(module);
-				}
-			}
-		}
-
-		public ModuleData(string name, IEnumerable<ModuleData> subModules)
-			: this(name, name, subModules) { }
 
 		public bool Equals(ModuleData other)
 		{
 			return other != null && this.Name == other.Name;
 		}
 
-		/// <summary>
-		/// create a copy, not reference
-		/// </summary>
-		public static ModuleData Copy(ModuleData origin)
+		public bool Equals(ModuleData x, ModuleData y)
 		{
-			return new ModuleData(origin.Name, origin.Title, origin.SubModules);
+			return x == null ? y == null : x.Equals(y);
 		}
 
-		~ModuleData()
+		public int GetHashCode(ModuleData obj)
 		{
-			this.subModules.CollectionChanged -= subModules_CollectionChanged;
+			return obj.Name.GetHashCode();
+		}
+
+		internal static ModuleData Empty
+		{
+			get { return new ModuleData(); }
+		}
+
+		System.Xml.Schema.XmlSchema IXmlSerializable.GetSchema()
+		{
+			return null;
+		}
+
+		void IXmlSerializable.ReadXml(System.Xml.XmlReader reader)
+		{
+			reader.MoveToNextAttribute();
+			var aaa = reader.Value;
+			reader.Read();
+			var bbb = reader.Value;
+		}
+
+		void IXmlSerializable.WriteXml(System.Xml.XmlWriter writer)
+		{
+			writer.WriteStartAttribute("name");
+			writer.WriteValue(this.Name);
+			writer.WriteEndAttribute();
+
+			writer.WriteStartAttribute("title");
+			writer.WriteValue(this.title);
+			writer.WriteEndAttribute();
 		}
 	}
 }

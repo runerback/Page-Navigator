@@ -7,15 +7,16 @@ namespace PageNavigatorSample.Modules.A
 {
 	public class ModuleAPart1Controller : PageNavigator.Business.ModuleControllerBase
 	{
-		internal ModuleAPart1Controller(PageNavigator.Model.ModuleData moduleData)
-			: base(moduleData)
+		internal ModuleAPart1Controller()
 		{
 			this.isSingleMode = true;
+			this.startPage = new Part1.Page();
 		}
 
-		protected override System.Windows.FrameworkElement setStartPage()
+		private System.Windows.FrameworkElement startPage;
+		protected override System.Windows.FrameworkElement StartPage
 		{
-			return new Part1.Page();
+			get { return startPage; }
 		}
 	}
 }

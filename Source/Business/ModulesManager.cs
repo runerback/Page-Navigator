@@ -110,19 +110,16 @@ namespace PageNavigator.Business
 				throw new FileNotFoundException(info.FullName);
 			}
 
-			object result;
-			XmlSerializer serializer = new XmlSerializer(typeof(Model.ModuleData));
-			using (var stream = info.OpenRead())
-			{
-				result = serializer.Deserialize(stream);
-			}
-			if (result == null)
-			{
-				throw new Exception("cannot read module sets data from file: " + info.FullName);
-			}
-			Model.ModuleData moduleSets = (Model.ModuleData)result;
-			AddRange(moduleSets.SubModules);
-			moduleSets = null;
+			//ModulesWrapper modulesWrapper;
+			//XmlSerializer serializer = new XmlSerializer(typeof(ModulesWrapper));
+			//using (var stream = info.OpenRead())
+			//{
+			//	modulesWrapper = serializer.Deserialize(stream) as ModulesWrapper;
+			//}
+			//if (modulesWrapper == null)
+			//	throw new Exception("cannot read module sets data from file: " + info.FullName);
+
+			//AddRange(modulesWrapper.Modules);
 		}
 
 		public static void Save(string filename = null)
@@ -137,13 +134,11 @@ namespace PageNavigator.Business
 				info.Directory.Create();
 			}
 
-			Model.ModuleData moduleSets = new Model.ModuleData(null, ModuleSets.ToList());
-			XmlSerializer serializer = new XmlSerializer(typeof(Model.ModuleData));
-			using (var stream = new FileStream(info.FullName, FileMode.Create, FileAccess.ReadWrite))
-			{
-				serializer.Serialize(stream, moduleSets);
-			}
-			moduleSets = null;
+			//XmlSerializer serializer = new XmlSerializer(typeof(ModulesWrapper));
+			//using (var stream = new FileStream(info.FullName, FileMode.Create, FileAccess.ReadWrite))
+			//{
+			//	serializer.Serialize(stream, new ModulesWrapper(ModuleSets));
+			//}
 		}
 	}
 }

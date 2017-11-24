@@ -7,15 +7,16 @@ namespace PageNavigatorSample.Modules.Home
 {
 	public class HomeModuleController : PageNavigator.Business.ModuleControllerBase
 	{
-		internal HomeModuleController(PageNavigator.Model.ModuleData moduleData)
-			: base(moduleData)
+		internal HomeModuleController()
 		{
 			this.isHomePage = true;
+			this.startPage = new HomeView();
 		}
 
-		protected override System.Windows.FrameworkElement setStartPage()
+		private System.Windows.FrameworkElement startPage;
+		protected override System.Windows.FrameworkElement StartPage
 		{
-			return new HomeView();
+			get { return startPage; }
 		}
 	}
 }

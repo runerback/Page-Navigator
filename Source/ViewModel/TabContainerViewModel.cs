@@ -33,7 +33,7 @@ namespace PageNavigator.ViewModel
 			var module = sender as Model.ModuleData;
 			if (module != null)
 			{
-				Business.ModuleControllerSchedule.CreateModule(module);
+				Business.ModuleControllerSchedule.Open(module);
 				this.OnPropertyChanged("ModuleControllers");
 				this.OnPropertyChanged("CurrentController");
 			}

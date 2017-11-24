@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -19,26 +20,34 @@ namespace PageNavigatorSample.Business
 			{
 				PageNavigator.Business.ModulesManager.Load();
 				PageNavigator.Business.ModuleControllerSchedule.SetModuleControllerMapping(moduleControllerMapping);
-				PageNavigator.Business.ModuleControllerSchedule.CreateModule(
+
+				Register("HomeModule", () => new Modules.Home.HomeModuleController());
+				Register("ModuleAPart1", () => new Modules.A.ModuleAPart1Controller());
+				Register("ModuleAPart2", () => new Modules.A.ModuleAPart2Controller());
+
+				PageNavigator.Business.ModuleControllerSchedule.Open(
 					new PageNavigator.Model.ModuleData("HomeModule", "Home"));
 				initialized = true;
 			}
 		}
 
-		private static PageNavigator.Business.ModuleControllerBase moduleControllerMapping(PageNavigator.Model.ModuleData moduleData)
+		private static PageNavigator.Business.ModuleControllerBase moduleControllerMapping(PageNavigator.Model.ModuleData module)
 		{
-			switch (moduleData.Name)
-			{
-				case "HomeModule":
-					return new Modules.Home.HomeModuleController(moduleData);
-				case "ModuleAPart1":
-					return new Modules.A.ModuleAPart1Controller(moduleData);
-				case "ModuleAPart2":
-					return new Modules.A.ModuleAPart2Controller(moduleData);
-				default:
-					throw new InvalidOperationException(
-						string.Format("not support for Module \"{0}\"", moduleData.Name));
-			}
+			Func<PageNavigator.Business.ModuleControllerBase> controllerSelector;
+			if (!moduleControllerMap.TryGetValue(module.Name, out controllerSelector))
+				throw new InvalidOperationException(
+					string.Format("not support for Module \"{0}\"", module.Name));
+			return controllerSelector();
+		}
+
+		private static ConcurrentDictionary<string, Func<PageNavigator.Business.ModuleControllerBase>> moduleControllerMap =
+			new ConcurrentDictionary<string, Func<PageNavigator.Business.ModuleControllerBase>>();
+
+		private static void Register(string moduleName, Func<PageNavigator.Business.ModuleControllerBase> controllerSelector)
+		{
+			if (!moduleControllerMap.TryAdd(moduleName, controllerSelector))
+				throw new ArgumentException(
+					string.Format("module with name \"{0}\" already registered"), moduleName);
 		}
 	}
 }

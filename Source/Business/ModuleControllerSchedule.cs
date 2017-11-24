@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
@@ -8,12 +9,12 @@ namespace PageNavigator.Business
 {
 	public static class ModuleControllerSchedule
 	{
-		/// <summary>
-		/// opened controllers module name and origin title map, same module will be add only once.
-		/// change current module title such as Module(1), Module(2).
-		/// when module closed, keep its module name for cache.
-		/// </summary>
-		private static Dictionary<string, string> moduleNameTitleMap = new Dictionary<string, string>();
+		///// <summary>
+		///// opened controllers module name and origin title map, same module will be add only once.
+		///// change current module title such as Module(1), Module(2).
+		///// when module closed, keep its module name for cache.
+		///// </summary>
+		//private static Dictionary<string, string> moduleNameTitleMap = new Dictionary<string, string>();
 
 		private static ObservableCollection<ModuleControllerBase> openedControllerList = new ObservableCollection<ModuleControllerBase>();
 		internal static ObservableCollection<ModuleControllerBase> OpenedModuleControllerList
@@ -21,12 +22,17 @@ namespace PageNavigator.Business
 			get { return openedControllerList; }
 		}
 
-		internal static int PinnedCount
+		private static ConcurrentDictionary<Model.ModuleData, List<ModuleControllerBase>> moduleControllerMap =
+			new ConcurrentDictionary<Model.ModuleData, List<ModuleControllerBase>>();
+		/// <summary>
+		/// controller to module indexes. when controller closed, search module here
+		/// </summary>
+		private static ConcurrentDictionary<ModuleControllerBase, Model.ModuleData> controllerModuleMap =
+			new ConcurrentDictionary<ModuleControllerBase, Model.ModuleData>();
+
+		private static int PinnedCount
 		{
-			get
-			{
-				return openedControllerList.Count(item => item.IsPinned);
-			}
+			get { return openedControllerList.Count(item => item.IsPinned); }
 		}
 
 		/// <summary>
@@ -54,51 +60,51 @@ namespace PageNavigator.Business
 		}
 
 		/// <summary>
-		/// Binding Controller to Module, then open its first page, and handle close event
+		/// find Controller bound to Module, then open its first page, and handle close event
 		/// </summary>
-		public static void CreateModule(Model.ModuleData module)
+		public static void Open(Model.ModuleData module)
 		{
-			//use new module not reference
-			Model.ModuleData moduleCopy = Model.ModuleData.Copy(module);
 			//get controller instance
-			ModuleControllerBase controller = moduleControllerMapping(moduleCopy);
+			ModuleControllerBase controller = moduleControllerMapping(module);
 			if (controller == null)
-			{
 				throw new InvalidOperationException("module controller can not be null.");
+
+			if (controller.IsSingleMode)
+			{
+				List<ModuleControllerBase> controllers;
+				if (moduleControllerMap.TryGetValue(module, out controllers))
+				{
+					var singleControllerInstance = controllers.SingleOrDefault();
+					if (singleControllerInstance != null)
+					{
+						NavigateTo(singleControllerInstance);
+						return;
+					}
+				}
 			}
+			//HomePage is Single too
 			if (controller.IsHomePage)
 			{
 				homePageCount++;
 				if (homePageCount > 1)
-				{
 					throw new InvalidOperationException("only can set one Home page.");
-				}
-			}
-			if (controller.IsSingleMode)
-			{
-				var singleControllerInstance = openedControllerList
-					.FirstOrDefault(item => item.Module.Equals(module));
-				if (singleControllerInstance != null)
-				{
-					NavigateTo(singleControllerInstance);
-					return;
-				}
 			}
 
-			createModule(controller);
+			createModule(module, controller);
 			currentModuleController = controller;
 			updateControllerActivateState();
 		}
 
-		private static void createModule(ModuleControllerBase controller)
+		private static void createModule(Model.ModuleData module, ModuleControllerBase controller)
 		{
-			if (!moduleNameTitleMap.ContainsKey(controller.Module.Name))
-			{
-				moduleNameTitleMap.Add(controller.Module.Name, controller.Module.Title);
-			}
 			controller.Closed += onModuleClosed;
+
+			var moduleControllers = moduleControllerMap.GetOrAdd(module, new List<ModuleControllerBase>());
+			moduleControllers.Add(controller);
 			openedControllerList.Insert(PinnedCount, controller);
-			updateOpenedModuleTitle(controller.Module.Name);
+			controllerModuleMap.TryAdd(controller, module);
+
+			updateOpenedModuleTitle(module);
 			controller.Create();
 		}
 
@@ -149,7 +155,16 @@ namespace PageNavigator.Business
 			var controller = (ModuleControllerBase)sender;
 			controller.Closed -= onModuleClosed;
 			openedControllerList.Remove(controller);
-			updateOpenedModuleTitle(controller.Module.Name);
+
+			Model.ModuleData module;
+			if (!controllerModuleMap.TryGetValue(controller, out module))
+				throw new InvalidOperationException("cannot find module data by controller");
+
+			List<ModuleControllerBase> controllers;
+			if (!moduleControllerMap.TryGetValue(module, out controllers))
+				throw new InvalidOperationException("cannot find controller by module");
+			controllers.Remove(controller);
+			updateOpenedModuleTitle(module);
 		}
 
 		private static void updateControllerActivateState()
@@ -163,21 +178,21 @@ namespace PageNavigator.Business
 			}
 		}
 
-		private static void updateOpenedModuleTitle(string moduleName)
+		private static void updateOpenedModuleTitle(Model.ModuleData module)
 		{
-			var controllers = openedControllerList
-					   .Where(item => item.Module.Name == moduleName)
-					   .OrderBy(item => item.CreatedDateTime)
-					   .ToList();
-			if (controllers.Count > 0)
+			List<ModuleControllerBase> moduleControllers;
+			if (moduleControllerMap.TryGetValue(module, out moduleControllers))
 			{
-				string originTitle = moduleNameTitleMap[moduleName];
-				controllers[0].Module.Title = originTitle;
-				if (controllers.Count > 1)
+				if (moduleControllers.Count > 0)
 				{
-					for (int index = 1; index < controllers.Count; index++)
+					int index = 0;
+					string moduleTitle = module.Title;
+					foreach (var controller in moduleControllers.OrderBy(item => item.CreatedTime))
 					{
-						controllers[index].Module.Title = string.Format("{0}({1})", originTitle, index);
+						if (index++ > 0)
+							controller.Header = string.Format("{0}({1})", moduleTitle, index);
+						else
+							controller.Header = moduleTitle;
 					}
 				}
 			}

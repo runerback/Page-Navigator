@@ -6,27 +6,48 @@ using System.Windows;
 
 namespace PageNavigator.Business
 {
-	public abstract class ModuleControllerBase : Common.ViewModelBase, IEquatable<ModuleControllerBase>
+	public abstract class ModuleControllerBase : Common.ViewModelBase, IEqualityComparer<ModuleControllerBase>
 	{
-		protected ModuleControllerBase(Model.ModuleData module)
+		//protected ModuleControllerBase(Model.ModuleData module)
+		//{
+		//	if (module == null)
+		//	{
+		//		throw new ArgumentNullException("module");
+		//	}
+		//	if (module.IsModuleSet)
+		//	{
+		//		throw new NotSupportedException(
+		//			string.Format("not support container module \"{0}\"", module.Name));
+		//	}
+		//	this.module = module;
+		//	this.CreatedDateTime = DateTime.Now;
+		//}
+
+		private string header;
+		/// <summary>
+		/// header in Tab
+		/// </summary>
+		public string Header
 		{
-			if (module == null)
+			get { return this.header; }
+			set
 			{
-				throw new ArgumentNullException("module");
+				if (this.header != value)
+				{
+					this.header = value;
+					OnPropertyChanged("Header");
+				}
 			}
-			if (module.IsModuleSet)
-			{
-				throw new NotSupportedException(
-					string.Format("not support container module \"{0}\"", module.Name));
-			}
-			this.module = module;
-			this.CreatedDateTime = DateTime.Now;
 		}
 
+		private DateTime createdTime = DateTime.Now;
 		/// <summary>
 		/// module controller created time. Use to set index of same opened module.
 		/// </summary>
-		public DateTime CreatedDateTime { get; private set; }
+		public DateTime CreatedTime
+		{
+			get { return createdTime; }
+		}
 
 		private bool isActivated;
 		/// <summary>
@@ -114,28 +135,28 @@ namespace PageNavigator.Business
 			}
 		}
 
-		private Model.ModuleData module;
-		/// <summary>
-		/// module data of current controller
-		/// </summary>
-		public Model.ModuleData Module
-		{
-			get { return this.module; }
-		}
+		//private Model.ModuleData module;
+		///// <summary>
+		///// module data of current controller
+		///// </summary>
+		//public Model.ModuleData Module
+		//{
+		//	get { return this.module; }
+		//}
 
 		/// <summary>
 		/// open current module with start page
 		/// </summary>
 		public void Create()
 		{
-			FrameworkElement startPage = this.setStartPage();
+			FrameworkElement startPage = this.StartPage;
 			this.OpenPage(startPage);
 		}
 
 		/// <summary>
-		/// specify module start page.
+		/// module start page.
 		/// </summary>
-		protected abstract FrameworkElement setStartPage();
+		protected abstract FrameworkElement StartPage { get; }
 
 		/// <summary>
 		/// store opened pages by order
@@ -152,6 +173,9 @@ namespace PageNavigator.Business
 		/// </summary>
 		public void OpenPage(FrameworkElement page)
 		{
+			if (page == null)
+				throw new ArgumentNullException("page");
+
 			if (this.currentPage != null)
 			{
 				//push last page into stack
@@ -216,14 +240,24 @@ namespace PageNavigator.Business
 
 		public event EventHandler Closed;
 
-		public bool Equals(ModuleControllerBase other)
+		//public bool Equals(ModuleControllerBase other)
+		//{
+		//	if (other == null) { return false; }
+		//	if (this.CreatedTime == other.CreatedTime)
+		//	{
+		//		return this.module.Equals(other.module);
+		//	}
+		//	return false;
+		//}
+
+		public bool Equals(ModuleControllerBase x, ModuleControllerBase y)
 		{
-			if (other == null) { return false; }
-			if (this.CreatedDateTime == other.CreatedDateTime)
-			{
-				return this.module.Equals(other.module);
-			}
-			return false;
+			return x == null ? y == null : x.createdTime == y.createdTime;
+		}
+
+		public int GetHashCode(ModuleControllerBase obj)
+		{
+			return obj.createdTime.GetHashCode();
 		}
 	}
 }
