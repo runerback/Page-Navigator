@@ -9,10 +9,14 @@ namespace PageNavigator.Model
 {
 	public class ModuleData : Common.ViewModelBase, IXmlSerializable, IEquatable<ModuleData>, IEqualityComparer<ModuleData>
 	{
+		private string name = null;
 		/// <summary>
 		/// Name in code. should be unique
 		/// </summary>
-		public string Name { get; private set; }
+		public string Name
+		{
+			get { return this.name; }
+		}
 
 		private string title;
 		/// <summary>
@@ -70,7 +74,7 @@ namespace PageNavigator.Model
 		{
 			if (string.IsNullOrWhiteSpace(name))
 				throw new ArgumentNullException("name");
-			this.Name = name;
+			this.name = name;
 		}
 
 		public ModuleData(string name, string title)
@@ -108,10 +112,9 @@ namespace PageNavigator.Model
 
 		void IXmlSerializable.ReadXml(System.Xml.XmlReader reader)
 		{
-			reader.MoveToNextAttribute();
-			var aaa = reader.Value;
 			reader.Read();
-			var bbb = reader.Value;
+			this.name = reader.GetAttribute("name");
+			this.title = reader.GetAttribute("title");
 		}
 
 		void IXmlSerializable.WriteXml(System.Xml.XmlWriter writer)

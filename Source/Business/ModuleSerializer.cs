@@ -11,32 +11,46 @@ namespace PageNavigator.Business
 {
 	internal class ModuleSerializer
 	{
-		public byte[] Serializer(IEnumerable<Model.ModuleData> modules)
+		public byte[] Serialize(IEnumerable<Model.ModuleData> modules)
 		{
 			if(modules==null)
 				throw new ArgumentNullException("modules");
-			throw new NotImplementedException();
+			XElement root = new XElement("ModuleSets");
+			//should handle Tree structure here
+			foreach (IXmlSerializable item in modules)
+			{
+				root.Add(serialize(item));
+			}
+			using (MemoryStream output = new MemoryStream())
+			{
+				root.Save(output);
+				return output.ToArray();
+			}
 		}
 
 		public IEnumerable<Model.ModuleData> Deserialize(byte[] data)
 		{
 			if (data == null || data.Length == 0)
-				return null;
+				yield break;
 			XDocument doc;
 			using (MemoryStream stream = new MemoryStream(data))
 			{
 				doc = XDocument.Load(stream);
 			}
-			
-			throw new NotImplementedException();
+
+			//should handle Tree structure here
+			foreach (var element in doc.Root.Elements())
+			{
+				yield return deserialize(element);
+			}
 		}
 
-		private XElement serialize(Model.ModuleData module)
+		private XElement serialize(IXmlSerializable module)
 		{
 			var element = new XElement("Module");
 			using (var writer = element.CreateWriter())
 			{
-				((IXmlSerializable)module).WriteXml(writer);
+				module.WriteXml(writer);
 			}
 			return element;
 		}

@@ -104,11 +104,10 @@ namespace PageNavigator.Business
 			{
 				filename = "AppData/modulesets.xml";
 			}
-			FileInfo info = new FileInfo(filename);
-			if (!info.Exists)
-			{
-				throw new FileNotFoundException(info.FullName);
-			}
+			//FileInfo info = new FileInfo(filename);
+			//if (!info.Exists)
+			if (!File.Exists(filename))
+				throw new FileNotFoundException(filename);
 
 			//ModulesWrapper modulesWrapper;
 			//XmlSerializer serializer = new XmlSerializer(typeof(ModulesWrapper));
@@ -120,6 +119,8 @@ namespace PageNavigator.Business
 			//	throw new Exception("cannot read module sets data from file: " + info.FullName);
 
 			//AddRange(modulesWrapper.Modules);
+			byte[] data = File.ReadAllBytes(filename);
+			AddRange(new Business.ModuleSerializer().Deserialize(data));
 		}
 
 		public static void Save(string filename = null)
@@ -128,17 +129,21 @@ namespace PageNavigator.Business
 			{
 				filename = "AppData/modulesets.xml";
 			}
-			FileInfo info = new FileInfo(filename);
-			if (!info.Directory.Exists)
-			{
-				info.Directory.Create();
-			}
+			//FileInfo info = new FileInfo(filename);
+			//if (!info.Directory.Exists)
+			//{
+			//	info.Directory.Create();
+			//}
+			if (!Directory.Exists(filename))
+				Directory.CreateDirectory(Path.GetDirectoryName(filename));
 
 			//XmlSerializer serializer = new XmlSerializer(typeof(ModulesWrapper));
 			//using (var stream = new FileStream(info.FullName, FileMode.Create, FileAccess.ReadWrite))
 			//{
 			//	serializer.Serialize(stream, new ModulesWrapper(ModuleSets));
 			//}
+			byte[] data = new Business.ModuleSerializer().Serialize(ModuleSets);
+			File.WriteAllBytes(filename, data);
 		}
 	}
 }

@@ -163,6 +163,7 @@
   <ItemGroup>
     <None Include="AppData\modulesets.xml">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <SubType>Designer</SubType>
     </None>
   </ItemGroup>
   <ItemGroup>
