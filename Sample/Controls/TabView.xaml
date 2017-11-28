@@ -15,7 +15,7 @@
                           IsThreeState="False"
                           ToolTip="{Binding Module.Title, Mode=OneWay}">
                 <StackPanel Orientation="Horizontal">
-                    <TextBlock Text="{Binding Module.Title, Mode=OneWay}" HorizontalAlignment="Stretch" VerticalAlignment="Center" Margin="3 0" />
+                    <TextBlock Text="{Binding Header, Mode=OneWay}" HorizontalAlignment="Stretch" VerticalAlignment="Center" Margin="3 0" />
                     <ToggleButton Content="P"
                                   Command="{Binding DataContext.PinModule, RelativeSource={RelativeSource Mode=FindAncestor, AncestorType=UserControl, AncestorLevel=1}}" 
                                   CommandParameter="{Binding .}"

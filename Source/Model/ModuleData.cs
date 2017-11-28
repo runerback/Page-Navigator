@@ -85,6 +85,11 @@ namespace PageNavigator.Model
 			this.Title = title;
 		}
 
+		public override string ToString()
+		{
+			return name;
+		}
+
 		public bool Equals(ModuleData other)
 		{
 			return other != null && this.Name == other.Name;

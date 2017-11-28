@@ -16,8 +16,7 @@ namespace PageNavigator.Business
 			if(modules==null)
 				throw new ArgumentNullException("modules");
 			XElement root = new XElement("ModuleSets");
-			//should handle Tree structure here
-			foreach (IXmlSerializable item in modules)
+			foreach (var item in modules)
 			{
 				root.Add(serialize(item));
 			}
@@ -38,31 +37,38 @@ namespace PageNavigator.Business
 				doc = XDocument.Load(stream);
 			}
 
-			//should handle Tree structure here
 			foreach (var element in doc.Root.Elements())
 			{
 				yield return deserialize(element);
 			}
 		}
 
-		private XElement serialize(IXmlSerializable module)
+		private XElement serialize(Model.ModuleData module)
 		{
 			var element = new XElement("Module");
 			using (var writer = element.CreateWriter())
 			{
-				module.WriteXml(writer);
+				((IXmlSerializable)module).WriteXml(writer);
+			}
+			foreach (var item in module.SubModules)
+			{
+				element.Add(serialize(item));
 			}
 			return element;
 		}
 
 		private Model.ModuleData deserialize(XElement element)
 		{
+			Model.ModuleData module = Model.ModuleData.Empty;
 			using (var reader = element.CreateReader())
 			{
-				Model.ModuleData module = Model.ModuleData.Empty;
 				((IXmlSerializable)module).ReadXml(reader);
-				return module;
 			}
+			foreach (XElement inner in element.Elements())
+			{
+				module.Add(deserialize(inner));
+			}
+			return module;
 		}
 	}
 }
