@@ -35,10 +35,15 @@ namespace PageNavigator.Business
 			get { return openedControllerList.Count(item => item.IsPinned); }
 		}
 
+		///// <summary>
+		///// Home page count must be 0 or 1.
+		///// </summary>
+		//private static int homePageCount = 0;
+
 		/// <summary>
-		/// Home page count must be 0 or 1.
+		/// indicate whether home page has been created
 		/// </summary>
-		private static int homePageCount = 0;
+		private static bool homePageCreated = false;
 
 		/// <summary>
 		/// get controller by module
@@ -85,9 +90,12 @@ namespace PageNavigator.Business
 			//HomePage is Single too
 			if (controller.IsHomePage)
 			{
-				homePageCount++;
-				if (homePageCount > 1)
+				if (homePageCreated)
 					throw new InvalidOperationException("only can set one Home page.");
+				homePageCreated = true;
+				//homePageCount++;
+				//if (homePageCount > 1)
+				//	throw new InvalidOperationException("only can set one Home page.");
 			}
 
 			createModule(module, controller);
